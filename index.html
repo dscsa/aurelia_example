@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <app-root></app-root>
+    <template id="app-root">
+      <a load="route:home">Home</a>
+      <a load="route:page1">Page 1</a>
+      <h1>App Root</h1>
+      <au-viewport></au-viewport>
+    </template>
+    <script type="module">
+      import { Aurelia, RouterConfiguration, Route, CustomElement } from 'https://cdn.jsdelivr.net/npm/aurelia/dist/native-modules/index.js';
+      import { Routes } from './routes/index.js';
+      import { Components } from './components/index.js';
+      
+      function getTemplate(id) {
+        const template = document.getElementById(id);
+        if (template === null) {
+          throw new Error(`template with id '${id}' does not exist.`)
+        }
+        template.removeAttribute('id');
+        template.remove();
+        return template;
+      }
+
+      async function importAuElement(elemName, path) {
+        const html = await fetch(`/${path}/${elemName}.html`);
+        const node = document.createRange().createContextualFragment(await html.text());
+        document.body.append(node);
+      }
+
+      async function registerAuElements(elementClasses, path) {
+        await Promise.all(elementClasses.map((elementClass) => importAuElement(elementClass.name, path)));
+        return elementClasses.map((elementClass) => {
+          return (
+            CustomElement.define({
+              name: elementClass.name,
+              template: getTemplate(elementClass.name),
+            }, elementClass)
+          );
+        });
+      }
+
+      async function start() {
+        const au = new Aurelia();
+        au.register(
+          RouterConfiguration.customize({
+            useUrlFragmentHash: false,
+          }),
+        );
+
+        const elements = await registerAuElements(Components, 'components');
+        elements.map(element => au.register(element));
+
+        const routeElements = await registerAuElements(Routes, 'routes');
+        const routes = Routes.map(route => {
+          au.register(route);
+          return { id: route.name, path: route.path, title: route.title, component: route };
+        });
+
+        const AppRoot = CustomElement.define({
+          name: 'app-root',
+          template: getTemplate('app-root'),
+        }, class {});
+
+        Route.configure({
+          routes
+        }, AppRoot);
+
+        au.app({
+          component: AppRoot,
+          host: document.querySelector('app-root'),
+        });
+
+        au.start();
+      }
+      start();
+    </script>
+  </body>
+</html>
