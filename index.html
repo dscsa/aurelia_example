@@ -28,17 +28,17 @@
 
       async function importAuElement(elemName, path) {
         const html = await fetch(`/${path}/${elemName}.html`);
-        const node = document.createRange().createContextualFragment(await html.text());
-        document.body.append(node);
+        return await html.text();
       }
 
       async function registerAuElements(elementClasses, path) {
-        await Promise.all(elementClasses.map((elementClass) => importAuElement(elementClass.name, path)));
-        return elementClasses.map((elementClass) => {
+        const htmlStrings = await Promise.all(elementClasses.map((elementClass) => importAuElement(elementClass.name, path)));
+        return elementClasses.map((elementClass, i) => {
+          const html = htmlStrings[i];
           return (
             CustomElement.define({
               name: elementClass.name,
-              template: getTemplate(elementClass.name),
+              template: html,
             }, elementClass)
           );
         });
