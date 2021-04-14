@@ -5,29 +5,14 @@
   </head>
   <body>
     <app-root></app-root>
-    <template id="app-root">
-      <a load="route:home">Home</a>
-      <a load="route:page1">Page 1</a>
-      <h1>App Root</h1>
-      <au-viewport></au-viewport>
-    </template>
     <script type="module">
       import { Aurelia, RouterConfiguration, Route, CustomElement } from 'https://cdn.jsdelivr.net/npm/aurelia/dist/native-modules/index.js';
-      import { Routes } from './routes/index.js';
-      import { Components } from './components/index.js';
-      
-      function getTemplate(id) {
-        const template = document.getElementById(id);
-        if (template === null) {
-          throw new Error(`template with id '${id}' does not exist.`)
-        }
-        template.removeAttribute('id');
-        template.remove();
-        return template;
-      }
+      import { Routes } from './src/routes/index.js';
+      import { Components } from './src/components/index.js';
+      import { AppRoot } from './src/root/app-root.js';
 
       async function importAuElement(elemName, path) {
-        const html = await fetch(`/${path}/${elemName}.html`);
+        const html = await fetch(`src/${path}/${elemName}.html`);
         return await html.text();
       }
 
@@ -39,6 +24,8 @@
             CustomElement.define({
               name: elementClass.name,
               template: html,
+              bindables: elementClass.bindables,
+              watches: elementClass.watches
             }, elementClass)
           );
         });
@@ -61,18 +48,20 @@
           return { id: route.name, path: route.path, title: route.title, component: route };
         });
 
-        const AppRoot = CustomElement.define({
-          name: 'app-root',
-          template: getTemplate('app-root'),
-        }, class {});
+
+        const RootHtml = await importAuElement(AppRoot.name, 'root');
+        const Root = CustomElement.define({
+          name: AppRoot.name,
+          template: RootHtml,
+        }, AppRoot);
 
         Route.configure({
           routes
-        }, AppRoot);
+        }, Root);
 
         au.app({
-          component: AppRoot,
-          host: document.querySelector('app-root'),
+          component: Root,
+          host: document.querySelector(AppRoot.name),
         });
 
         au.start();
