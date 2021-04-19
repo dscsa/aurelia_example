@@ -1,0 +1,1 @@
+export { Components as GlobalComponents } from './global/index.js';

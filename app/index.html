@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/">
+  </head>
+  <body>
+    <app-root></app-root>
+    <script type="module">
+      import { Aurelia, RouterConfiguration, Route, CustomElement } from 'https://cdn.jsdelivr.net/npm/aurelia/dist/native-modules/index.js';
+      import { Routes } from './routes/index.js';
+      import { GlobalComponents } from './components/index.js';
+      import { AppRoot } from './root/app-root.js';
+
+      let dependencies = [];
+
+      async function importAuElement(elemName, path) {
+        const html = await fetch(`${path}/${elemName}.html`);
+        return await html.text();
+      }
+
+      async function defineAuElement(elementClass, path) {
+        const html = await importAuElement(elementClass.name, path);
+        let dependencies = [];
+        if (elementClass.dependencies && elementClass.dependencies.length) {
+          dependencies = await Promise.all(elementClass.dependencies.map((dep) => findOrCreateDependency(dep)));
+        }
+        return (
+          CustomElement.define({
+            name: elementClass.name,
+            template: html,
+            bindables: elementClass.bindables,
+            watches: elementClass.watches,
+            dependencies
+          }, elementClass)
+        )
+      }
+
+      async function findOrCreateDependency(elementClass) {
+        let dependency = dependencies.find((dep) => dep.elementClass.name === elementClass.name);
+        if (dependency) {
+          return await dependency.element;
+        }
+        let element = defineAuElement(elementClass, 'components/local');
+        dependencies.push({ elementClass, element });
+
+        return await element;
+      }
+
+      async function start() {
+        const au = new Aurelia();
+        au.register(RouterConfiguration);
+
+        await Promise.all(GlobalComponents.map(async (component) => {
+          const element = await defineAuElement(component, 'components/global');
+          au.register(element);
+        }));
+
+        const routes = await Promise.all(Routes.map(async (route) => {
+          await defineAuElement(route, 'routes');
+          return { id: route.name, path: route.path, title: route.title, component: route };
+        }));
+
+        const Root = await defineAuElement(AppRoot, 'root');
+
+        Route.configure({
+          routes
+        }, Root);
+
+        au.app({
+          component: Root,
+          host: document.querySelector(AppRoot.name),
+        });
+
+        au.start();
+      }
+      start();
+    </script>
+  </body>
+</html>
