@@ -1,5 +1,5 @@
 export class CustomButton {
-  static name = 'custom-button';
-  static bindables = ['text'];
+  static get name() { return 'custom-button' };
+  static get bindables() { return ['text'] };
   text = 'default button text';
 }

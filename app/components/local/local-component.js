@@ -1,3 +1,3 @@
 export class LocalComponent {
-  static name = 'local-component';
+  static get name() { return 'local-component' };
 }

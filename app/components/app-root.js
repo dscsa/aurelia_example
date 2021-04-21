@@ -1,3 +1,3 @@
 export class AppRoot {
-  static name = 'app-root';
+  static get name() { return 'app-root' };
 }

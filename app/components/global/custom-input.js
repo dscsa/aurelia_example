@@ -1,5 +1,5 @@
 export class CustomInput {
-  static name = 'custom-input';
-  static bindables = ['value'];
+  static get name() { return 'custom-input' };
+  static get bindables() { return ['value'] };
   value = 'input value';
 }
