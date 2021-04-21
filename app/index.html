@@ -10,8 +10,8 @@
     <script type="module">
       import { Aurelia, RouterConfiguration, Route, CustomElement } from 'https://cdn.jsdelivr.net/npm/aurelia/dist/native-modules/index.js';
       import { Routes } from './routes/index.js';
-      import { GlobalComponents } from './components/index.js';
-      import { AppRoot } from './root/app-root.js';
+      import { Components } from './components/global/index.js';
+      import { AppRoot } from './components/app-root.js';
 
       let dependencies = [];
 
@@ -52,7 +52,7 @@
         const au = new Aurelia();
         au.register(RouterConfiguration);
 
-        await Promise.all(GlobalComponents.map(async (component) => {
+        await Promise.all(Components.map(async (component) => {
           const element = await defineAuElement(component, 'components/global');
           au.register(element);
         }));
@@ -62,7 +62,7 @@
           return { id: route.name, path: route.path, title: route.title, component: route };
         }));
 
-        const Root = await defineAuElement(AppRoot, 'root');
+        const Root = await defineAuElement(AppRoot, 'components');
 
         Route.configure({
           routes
